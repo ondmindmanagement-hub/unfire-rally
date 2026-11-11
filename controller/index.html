@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Unfire Rally · Mando</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--tx:#eef2f8;--tx2:#a3adbf;--line:rgba(255,255,255,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:radial-gradient(600px 400px at 80% 0%,rgba(77,163,255,.22),transparent 60%),radial-gradient(500px 400px at 0% 100%,rgba(255,138,61,.16),transparent 60%),#07080c;color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+main{min-height:100%;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 18px)}
+.brand{font-weight:800;letter-spacing:.2em;font-size:12px;color:var(--tx2)}
+h1{margin:6px 0 2px;font-size:34px;letter-spacing:-.02em}
+.card{background:rgba(14,18,28,.75);border:1px solid var(--line);border-radius:20px;padding:18px;margin-top:16px;backdrop-filter:blur(14px)}
+input{width:100%;font:800 34px ui-monospace,Menlo,monospace;letter-spacing:.3em;text-transform:uppercase;text-align:center;background:#0b0f17;border:1px solid var(--line);border-radius:14px;color:#fff;padding:12px;outline:none}
+input.name{font:600 18px -apple-system,sans-serif;letter-spacing:0;text-transform:none;margin-top:10px}
+button{font:inherit;color:#fff;border:0;border-radius:16px;padding:16px;width:100%;font-weight:800;font-size:18px;margin-top:12px;background:linear-gradient(135deg,#2f7cf6,#7a5cff 60%,#ff8a3d);box-shadow:0 10px 30px rgba(122,92,255,.35)}
+button.sec{background:rgba(255,255,255,.06);box-shadow:none;border:1px solid var(--line);font-weight:650;font-size:15px}
+.hide{display:none!important}
+#pad{flex:1;display:flex;flex-direction:column}
+#racket{flex:1;margin-top:14px;border-radius:28px;border:1px solid var(--line);display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 45%,rgba(77,163,255,.18),transparent 60%),#0b0f17;touch-action:none}
+#ring{width:62vw;max-width:300px;aspect-ratio:1/1.25;border-radius:50%;border:6px solid rgba(255,255,255,.85);box-shadow:0 0 40px rgba(77,163,255,.35),inset 0 0 40px rgba(77,163,255,.2);transition:transform .08s,box-shadow .2s;background:repeating-linear-gradient(0deg,transparent 0 14px,rgba(255,255,255,.08) 14px 16px),repeating-linear-gradient(90deg,transparent 0 14px,rgba(255,255,255,.08) 14px 16px)}
+#ring.hit{transform:scale(1.06);box-shadow:0 0 70px rgba(216,242,74,.8),inset 0 0 50px rgba(216,242,74,.35)}
+#status{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:var(--tx2);font-size:14px}
+#meter{height:8px;border-radius:8px;background:#141a26;margin-top:12px;overflow:hidden}#meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3ee6d2,#d8f24a,#ff8a3d);transition:width .12s}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pill{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--tx2)}
+.pill.ok{color:#7ef0ad;border-color:rgba(61,220,132,.4)}
+.tip{color:var(--tx2);font-size:13px;margin-top:10px}
+#toast{position:fixed;left:50%;top:22%;transform:translateX(-50%);font-size:30px;font-weight:850;opacity:0;transition:.25s;pointer-events:none;text-shadow:0 6px 24px rgba(0,0,0,.6)}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">UNFIRE · RALLY</div>
+  <section id="join">
+    <h1>Mando de tenis</h1>
+    <div class="card">
+      <div class="tip" style="margin:0 0 10px">Escribe el código que ves en la tele</div>
+      <input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" inputmode="text" placeholder="····">
+      <input id="name" class="name" maxlength="16" placeholder="Tu nombre">
+      <button id="go">Conectar</button>
+      <div class="tip">Sujeta el móvil como una raqueta, con la correa en la muñeca si tienes, y deja espacio libre a tu alrededor.</div>
+    </div>
+  </section>
+  <section id="pad" class="hide">
+    <div class="top"><h1 id="who" style="font-size:24px">Jugador</h1><span class="pill" id="net">conectando…</span></div>
+    <div id="racket"><div id="ring"></div><div id="status">Pulsa «Activar movimiento»</div></div>
+    <div id="meter"><i></i></div>
+    <button id="motion">Activar movimiento</button>
+    <button class="sec" id="calib">Calibrar (quieto 1 s)</button>
+    <div class="tip">Sin sensores: toca o desliza la raqueta para golpear. Deslizar más rápido = más potencia; hacia un lado = dirección.</div>
+  </section>
+</main>
+<div id="toast"></div>
+<script src="../vendor/peerjs.min.js"></script>
+<script src="../shared/net.js"></script>
+<script>
+(() => {
+const $ = (s) => document.querySelector(s);
+const q = new URLSearchParams(location.search);
+if (q.get('c')) $('#code').value = q.get('c');
+$('#name').value = localStorage.getItem('rally-name') || '';
+let pad = null, slot = -1;
+const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 1200); };
+const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+$('#go').onclick = () => {
+  const code = $('#code').value.trim(); if (code.length < 4) return toast('Código de 4 letras');
+  const name = $('#name').value.trim() || 'Jugador'; try { localStorage.setItem('rally-name', name); } catch (e) {}
+  $('#join').classList.add('hide'); $('#pad').classList.remove('hide'); $('#who').textContent = name;
+  pad = new KinektNet.Pad({ code, name,
+    onState(s, why) { const n = $('#net'); n.textContent = s === 'open' ? 'conectado' : s === 'error' ? 'error ' + (why || '') : s; n.classList.toggle('ok', s === 'open'); },
+    onMsg(m) {
+      if (m.t === 'welcome') { slot = m.slot; $('#who').textContent = $('#name').value || 'Jugador ' + (slot + 1); $('#racket').style.borderColor = slot % 2 ? 'rgba(255,138,61,.6)' : 'rgba(77,163,255,.6)'; }
+      if (m.t === 'full') toast('Partida llena (4 mandos)');
+      if (m.t === 'hit') { buzz(m.kind === 'serve' ? 40 : 25); ring(); }
+      if (m.t === 'point') { toast(m.won ? '¡Punto!' : 'Punto rival'); buzz(m.won ? [30, 40, 30] : 80); }
+      if (m.t === 'end') toast(m.winner === slot % 2 ? '¡Victoria!' : 'Fin del partido');
+    } });
+  setInterval(() => { if (pad && pad.rtt) $('#net').textContent = 'conectado · ' + Math.round(pad.rtt) + ' ms'; }, 2000);
+};
+function ring() { const r = $('#ring'); r.classList.add('hit'); setTimeout(() => r.classList.remove('hit'), 140); }
+function send(power, aim, spin, src) {
+  if (!pad) return; pad.send({ t: 'swing', power: +power.toFixed(3), aim: aim == null ? null : +aim.toFixed(3), spin: +spin.toFixed(2), src, at: Date.now() });
+  $('#meter i').style.width = Math.round(power * 100) + '%'; $('#status').textContent = 'Golpe ' + Math.round(power * 100) + '%';
+}
+// ---------- motion swing detector (gyro peak + refractory), aim from yaw at impact
+const D = { th: 260, noise: 0, yaw0: null, yaw: null, active: false, peak: 0, start: 0, last: 0, pitchSum: 0, n: 0 };
+function onOrient(e) { if (e.alpha != null) D.yaw = e.alpha; }
+function onMotion(e) {
+  const r = e.rotationRate || {}; const w = Math.hypot(r.alpha || 0, r.beta || 0, r.gamma || 0); const now = performance.now();
+  if (D.calib) { D.calib.push(w); return; }
+  if (!D.active) { if (w > D.th && now - D.last > 380) { D.active = true; D.peak = w; D.start = now; D.pitchSum = 0; D.n = 0; } }
+  else {
+    D.peak = Math.max(D.peak, w); D.pitchSum += (r.beta || 0); D.n++;
+    if (w < D.th * 0.45 || now - D.start > 650) {
+      D.active = false; D.last = now; const dur = now - D.start;
+      if (dur > 35) {
+        const power = Math.max(0.15, Math.min(1, (D.peak - D.th) / 1100 + 0.25));
+        let aim = null; if (D.yaw != null && D.yaw0 != null) { let d = ((D.yaw - D.yaw0 + 540) % 360) - 180; aim = Math.max(-1, Math.min(1, -d / 35)); }
+        const spin = Math.max(-1, Math.min(1, (D.pitchSum / Math.max(1, D.n)) / 400));
+        send(power, aim, spin, 'motion'); ring();
+      }
+    }
+  }
+}
+$('#motion').onclick = async () => {
+  try {
+    if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) { const s = await DeviceMotionEvent.requestPermission(); if (s !== 'granted') throw new Error('permiso denegado'); }
+    if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) { try { await DeviceOrientationEvent.requestPermission(); } catch (e) {} }
+    addEventListener('devicemotion', onMotion); addEventListener('deviceorientation', onOrient);
+    $('#motion').classList.add('hide'); $('#status').textContent = 'Movimiento activo · ¡golpea!'; calibrate();
+  } catch (e) { toast('Sensores no disponibles'); $('#status').textContent = 'Usa toque o deslizamiento (' + e.message + ')'; }
+};
+function calibrate() {
+  D.calib = []; $('#status').textContent = 'Calibrando… quieto'; 
+  setTimeout(() => { const a = D.calib || []; D.calib = null; const m = a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0; D.noise = m; D.th = Math.max(240, m * 8); D.yaw0 = D.yaw; $('#status').textContent = 'Listo · apunta a la tele y golpea'; toast('Calibrado'); }, 1100);
+}
+$('#calib').onclick = calibrate;
+// ---------- touch fallback: tap = medium shot, swipe = power+direction
+let t0 = null;
+$('#racket').addEventListener('pointerdown', (e) => { t0 = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+$('#racket').addEventListener('pointerup', (e) => {
+  if (!t0) return; const dx = e.clientX - t0.x, dy = e.clientY - t0.y, dt = Math.max(16, performance.now() - t0.t); t0 = null;
+  const v = Math.hypot(dx, dy) / dt; // px/ms
+  if (v < 0.25) { send(0.6, null, 0.3, 'tap'); ring(); return; }
+  send(Math.min(1, 0.3 + v / 3), Math.max(-1, Math.min(1, dx / 160)), dy < 0 ? 0.6 : -0.4, 'swipe'); ring();
+});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unfire Rally · Tenis con tu móvil</title>
+<meta name="description" content="Unfire Rally: juega al tenis en la tele usando tu móvil como raqueta. Sin consola, sin instalar nada. Hasta 4 jugadores.">
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#07080c;--card:rgba(14,18,28,.78);--line:rgba(255,255,255,.1);--tx:#eef2f8;--tx2:#a3adbf;--blue:#4da3ff;--cyan:#3ee6d2;--orange:#ff8a3d;--violet:#9b7bff}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+#stage{position:fixed;inset:0}
+.glass{background:var(--card);backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+#lobby{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(900px 500px at 70% 10%,rgba(77,163,255,.18),transparent 60%),radial-gradient(700px 400px at 10% 100%,rgba(255,138,61,.12),transparent 60%),rgba(5,7,12,.55);z-index:5;transition:opacity .4s}
+#lobby.hide{opacity:0;pointer-events:none}
+.panel{width:min(980px,92vw);padding:34px 38px;display:grid;grid-template-columns:1.15fr .85fr;gap:34px}
+.brand{font-weight:850;letter-spacing:.22em;font-size:13px;color:var(--tx2)}
+h1{font-size:64px;line-height:1;margin:10px 0 6px;letter-spacing:-.03em;font-weight:850;background:linear-gradient(120deg,#fff,#b9d8ff 45%,#ffcf9e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--tx2);font-size:17px;margin:0 0 24px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}
+.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx2);font-weight:700;margin-top:6px}
+.opt{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--tx);padding:10px 16px;border-radius:12px;cursor:pointer;font-size:15px;transition:.15s}
+.opt.on{background:linear-gradient(135deg,rgba(47,124,246,.9),rgba(122,92,255,.9));border-color:transparent;box-shadow:0 8px 24px rgba(77,124,246,.35)}
+.play{margin-top:14px;width:100%;border:0;border-radius:16px;padding:18px;font-size:20px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(135deg,#2f7cf6,#7a5cff 60%,#ff8a3d);box-shadow:0 14px 40px rgba(122,92,255,.4);letter-spacing:.02em}
+.play:hover{filter:brightness(1.08)}
+.join{padding:22px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid var(--line)}
+.code{font:800 56px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.18em;margin:10px 0 4px;color:#fff}
+.url{font:13px ui-monospace,Menlo,monospace;color:var(--cyan);word-break:break-all}
+.slots{display:grid;gap:8px;margin-top:18px}
+.slot{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px dashed var(--line);color:var(--tx2)}
+.slot.on{border-style:solid;color:var(--tx);background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)}
+.dot{width:12px;height:12px;border-radius:50%;background:#3a4252}.slot.on .dot{background:#3ddc84;box-shadow:0 0 12px #3ddc84}
+.hint{color:var(--tx2);font-size:13px;margin-top:14px}
+kbd{font:12px ui-monospace,Menlo,monospace;background:#1a2030;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+/* HUD */
+#score{position:fixed;top:22px;left:22px;padding:12px 16px;z-index:3;display:none;min-width:280px}
+.sr{display:grid;grid-template-columns:14px 1fr 34px 34px 64px;align-items:center;gap:10px;padding:4px 0;font-weight:700}
+.sr .n{font-weight:650}.sr .g{text-align:center;color:var(--tx2)}.sr .p{text-align:center;font:800 18px ui-monospace,Menlo,monospace;background:rgba(255,255,255,.08);border-radius:8px;padding:2px 0}
+.srv{width:8px;height:8px;border-radius:50%;background:#d8f24a;box-shadow:0 0 10px #d8f24a;visibility:hidden}.srv.on{visibility:visible}
+.tm0{color:#8cc4ff}.tm1{color:#ffb98a}
+#call{position:fixed;left:50%;top:16%;transform:translate(-50%,-10px);font-size:42px;font-weight:850;letter-spacing:-.01em;opacity:0;transition:.35s;z-index:3;text-shadow:0 6px 30px rgba(0,0,0,.6);white-space:nowrap}
+#call.on{opacity:1;transform:translate(-50%,0)}
+#help{position:fixed;right:22px;bottom:20px;padding:10px 14px;font-size:13px;color:var(--tx2);z-index:3;display:none}
+#end{position:fixed;inset:0;display:none;place-items:center;z-index:6;background:rgba(5,7,12,.6)}
+#end .glass{padding:34px 40px;text-align:center;min-width:420px}
+#end h2{font-size:46px;margin:0 0 6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+.stats div{background:rgba(255,255,255,.04);border-radius:14px;padding:12px}.stats b{display:block;font-size:26px}
+#hitflash{position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle at 50% 70%,rgba(216,242,74,.18),transparent 45%);opacity:0;transition:opacity .25s}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="hitflash"></div>
+<section id="lobby">
+  <div class="panel glass">
+    <div>
+      <div class="brand">UNFIRE · RALLY</div>
+      <h1>Tenis</h1>
+      <p class="sub">Tu móvil es la raqueta. La tele, la pista.</p>
+      <div class="lbl">Superficie</div>
+      <div class="row" id="optSurf"><button class="opt on" data-v="hard">Pista rápida</button><button class="opt" data-v="clay">Tierra batida</button><button class="opt" data-v="grass">Hierba</button></div>
+      <div class="lbl">Partido</div>
+      <div class="row" id="optGames"><button class="opt" data-v="2">Exprés · 2 juegos</button><button class="opt on" data-v="4">Rápido · 4 juegos</button><button class="opt" data-v="6">Set completo · 6</button></div>
+      <div class="lbl">Rival IA</div>
+      <div class="row" id="optDiff"><button class="opt" data-v="0.45">Amateur</button><button class="opt on" data-v="0.75">Club</button><button class="opt" data-v="1">Profesional</button></div>
+      <button class="play" id="play">Jugar</button>
+      <div class="hint">Sin móvil: <kbd>Espacio</kbd> golpear/sacar · <kbd>←</kbd><kbd>→</kbd> apuntar · <kbd>↑</kbd> más fuerte</div>
+    </div>
+    <div class="join">
+      <div class="lbl">Conecta tu móvil</div>
+      <div class="code" id="code">····</div>
+      <div class="hint" style="margin-top:2px">Abre en el móvil:</div>
+      <div class="url" id="url"></div>
+      <div class="slots" id="slots"></div>
+      <div class="hint" id="netstate">Preparando conexión…</div>
+    </div>
+  </div>
+</section>
+<div id="score" class="glass"></div>
+<div id="call"></div>
+<div id="help" class="glass"><kbd>Espacio</kbd> golpe · <kbd>←</kbd><kbd>→</kbd> dirección · <kbd>Esc</kbd> menú</div>
+<section id="end"><div class="glass"><div class="brand">PARTIDO TERMINADO</div><h2 id="endTitle"></h2><div class="stats" id="endStats"></div><button class="play" id="again">Otra partida</button></div></section>
+<script src="../vendor/three.min.js"></script>
+<script src="../vendor/peerjs.min.js"></script>
+<script src="../shared/net.js"></script>
+<script src="game.js"></script>
+<script>
+(() => {
+const $ = (s) => document.querySelector(s);
+const humans = new Map(); // slot -> name
+const NAMES = ['Azul', 'Naranja'];
+const ui = {
+  humans: () => [...humans.keys()],
+  score(s) {
+    const el = $('#score'); el.style.display = 'block';
+    const row = (t) => `<div class="sr tm${t}"><span class="srv ${s.server === t ? 'on' : ''}"></span><span class="n">${teamName(t)}</span><span class="g">${s.s[t]}</span><span class="g">${s.g[t]}</span><span class="p">${s.tb ? s.p[t] : ['0','15','30','40'][Math.min(s.p[t],3)] + (s.p[0]>=3&&s.p[1]>=3&&s.p[t]>s.p[1-t]?'+':'')}</span></div>`;
+    el.innerHTML = `<div class="sr" style="color:var(--tx2);font-size:11px;letter-spacing:.12em"><span></span><span>${s.tb ? 'TIE-BREAK' : 'MARCADOR'}</span><span class="g">SET</span><span class="g">JUE</span><span class="g">PTS</span></div>` + row(0) + row(1);
+  },
+  call(text, team) { const c = $('#call'); c.textContent = text; c.style.color = team === 0 ? '#bfe0ff' : team === 1 ? '#ffd2b0' : '#fff'; c.classList.add('on'); clearTimeout(c._t); c._t = setTimeout(() => c.classList.remove('on'), 1900); },
+  feedback(slot, m) { host && host.sendTo(slot, m); },
+  flash() { const f = $('#hitflash'); f.style.opacity = 1; setTimeout(() => (f.style.opacity = 0), 90); },
+  end(s, st) {
+    $('#endTitle').textContent = `Gana ${teamName(s.winner)}`;
+    $('#endStats').innerHTML = `<div><b>${st.points}</b>puntos</div><div><b>${st.maxRally}</b>peloteo más largo</div><div><b>${st.humanHits}/${st.humanSwings}</b>golpes acertados</div>`;
+    $('#end').style.display = 'grid'; host && host.broadcast({ t: 'end', winner: s.winner });
+  },
+};
+function teamName(t) { const hs = [...humans.entries()].filter(([sl]) => (sl % 2) === t).map(([, n]) => n); return hs.length ? hs.join(' & ') : (t === 0 ? 'Jugador' : 'Unfire IA'); }
+const match = new KinektTennis.Match(ui); window.__kinekt = match;
+// options
+const opt = { surf: 'hard', games: 4, diff: 0.75 };
+[['#optSurf', 'surf'], ['#optGames', 'games'], ['#optDiff', 'diff']].forEach(([id, k]) => $(id).addEventListener('click', (e) => { const b = e.target.closest('.opt'); if (!b) return; $(id).querySelectorAll('.opt').forEach((x) => x.classList.toggle('on', x === b)); opt[k] = k === 'surf' ? b.dataset.v : +b.dataset.v; if (k === 'surf') match.setSurface(opt.surf); }));
+function slotsUI() { $('#slots').innerHTML = [0, 1, 2, 3].map((s) => `<div class="slot ${humans.has(s) ? 'on' : ''}"><span class="dot"></span>${humans.has(s) ? humans.get(s) + ' · ' + (s % 2 ? 'equipo naranja' : 'equipo azul') : 'Mando ' + (s + 1) + ' libre'}</div>`).join(''); }
+slotsUI();
+// keyboard player (slot 0 if no phone)
+let kbAim = 0, kbPow = 0.7;
+function ensureKeyboard() { if (!humans.size) { humans.set(0, 'Teclado'); match.assign(0); slotsUI(); } }
+$('#play').onclick = () => { ensureKeyboard(); $('#lobby').classList.add('hide'); $('#help').style.display = 'block'; $('#end').style.display = 'none'; match.start(opt.games, opt.surf, opt.diff); host && host.broadcast({ t: 'start' }); };
+$('#again').onclick = () => $('#play').onclick();
+addEventListener('keydown', (e) => {
+  if (e.code === 'Escape') { $('#lobby').classList.remove('hide'); match.paused = true; }
+  if (e.code === 'ArrowLeft') kbAim = -0.9; if (e.code === 'ArrowRight') kbAim = 0.9; if (e.code === 'ArrowUp') kbPow = 1;
+  if (e.code === 'Space') { e.preventDefault(); const slot = humans.has(0) ? 0 : [...humans.keys()][0]; match.humanSwing(slot ?? 0, { power: kbPow, spin: 0.35, aim: kbAim || null }); kbAim = 0; kbPow = 0.7; }
+});
+// network
+let host = null;
+try {
+  host = new KinektNet.Host({
+    onJoin(slot, name) { if (humans.get(0) === 'Teclado') { humans.delete(0); match.release(0); } humans.set(slot, name); match.assign(slot); slotsUI(); ui.call(`${name} conectado`); },
+    onLeave(slot) { humans.delete(slot); match.release(slot); slotsUI(); },
+    onMsg(slot, m) { if (m.t === 'swing') match.humanSwing(slot, m); if (m.t === 'start' && $('#lobby').classList.contains('hide') === false) $('#play').onclick(); },
+  });
+  host.ready.then((code) => {
+    $('#code').textContent = code;
+    const base = location.href.replace(/\/tv\/.*$/, '/controller/');
+    $('#url').textContent = base + '?c=' + code + (host.transport === 'local' ? '&local' : '');
+    $('#netstate').textContent = host.transport === 'local' ? 'Modo pruebas (misma máquina).' : 'Listo. Hasta 4 mandos.';
+  }).catch((e) => { $('#netstate').textContent = 'Sin conexión para móviles (' + (e.type || e) + '). Puedes jugar con teclado.'; });
+} catch (e) { $('#netstate').textContent = 'Sin red: juega con teclado.'; }
+})();
+</script>
+</body>
+</html>

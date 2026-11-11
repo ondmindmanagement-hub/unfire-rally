@@ -1,0 +1,4 @@
+qa/*.png
+qa/e2e_result.json
+INTERNAL_STATUS.md
+.DS_Store
