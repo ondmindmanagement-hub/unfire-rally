@@ -1,9 +1,9 @@
 // Unfire Kinekt · end-to-end QA (headless Chrome): TV + phone controller in the same browser (BroadcastChannel transport).
 // Verifies: no JS errors, lobby, phone join, motion-sensor swing detection (synthetic DeviceMotion), touch fallback,
 // AI-vs-AI rules engine over many points, scoring progression, no NaN, fps. Screenshots in qa/.
-const puppeteer = require('/Users/omarbaro/.npm/_npx/4b4c857f6efdfb61/node_modules/puppeteer');
+const puppeteer = require(process.env.PUPPETEER_MODULE || 'puppeteer');
 const fs = require('fs');
-const BASE = 'http://127.0.0.1:8793';
+const BASE = process.env.BASE || 'http://127.0.0.1:8793';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
   const out = { errors: [], external: [], steps: {} };
