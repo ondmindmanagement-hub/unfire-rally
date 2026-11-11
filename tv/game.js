@@ -7,7 +7,7 @@ const C = { L: 23.77, HL: 11.885, SW: 4.115, DW: 5.485, SVC: 6.40, NET: 0.914, P
 const SURF = {
   hard:  { name: 'Pista rápida', court: '#2c5fa8', out: '#2f7d5b', vy: 0.74, vh: 0.80 },
   clay:  { name: 'Tierra batida', court: '#c4622d', out: '#b2552a', vy: 0.79, vh: 0.74 },
-  grass: { name: 'Hierba', court: '#4f9a3c', out: '#3f8530', vy: 0.66, vh: 0.86 },
+  grass: { name: 'Hierba', court: '#5aa53f', out: '#4c9437', vy: 0.66, vh: 0.86 },
 };
 const PT = ['0', '15', '30', '40'];
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -67,7 +67,7 @@ class Stadium {
     while (this.group.children.length) this.group.remove(this.group.children[0]);
     const ground = new T.Mesh(new T.PlaneGeometry(18.3, 36.6), new T.MeshStandardMaterial({ map: this.courtTexture(s), roughness: 0.92 }));
     ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; this.group.add(ground);
-    const apron = new T.Mesh(new T.PlaneGeometry(120, 140), new T.MeshStandardMaterial({ color: 0x1b2230, roughness: 1 }));
+    const apron = new T.Mesh(new T.PlaneGeometry(52, 64), new T.MeshStandardMaterial({ color: 0x3f7f3a, roughness: 1 }));
     apron.rotation.x = -Math.PI / 2; apron.position.y = -0.01; apron.receiveShadow = true; this.group.add(apron);
     // net
     const netTex = (() => { const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64; const g = cv.getContext('2d'); g.strokeStyle = 'rgba(230,236,245,0.85)'; g.lineWidth = 2; for (let i = 0; i <= 64; i += 8) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 64); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(64, i); g.stroke(); } const t = new T.CanvasTexture(cv); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(60, 5); return t; })();
@@ -81,8 +81,8 @@ class Stadium {
     [[-16, -20], [16, -20], [-16, 20], [16, 20]].forEach(([x, z]) => { const m = new T.Mesh(new T.BoxGeometry(2.2, 0.5, 0.3), new T.MeshBasicMaterial({ color: 0xfff6dd })); m.position.set(x, 18, z); m.lookAt(0, 0, 0); this.group.add(m); });
   }
   buildCrowd() {
-    const rows = 9, perRow = 64, sides = [];
-    const stand = new T.MeshStandardMaterial({ color: 0x232a38, roughness: 0.9 });
+    const rows = 7, perRow = 56, sides = [];
+    const stand = new T.MeshStandardMaterial({ color: 0x1f5a40, roughness: 0.85 });
     const seats = [];
     const addStand = (cx, cz, rotY, len) => {
       for (let r = 0; r < rows; r++) {
@@ -97,7 +97,7 @@ class Stadium {
     const n = seats.length;
     const body = new T.InstancedMesh(new T.BoxGeometry(0.42, 0.62, 0.3), new T.MeshStandardMaterial({ roughness: 0.8 }), n);
     const head = new T.InstancedMesh(new T.SphereGeometry(0.15, 10, 8), new T.MeshStandardMaterial({ roughness: 0.7 }), n);
-    const pal = [0xff5d6c, 0x4da3ff, 0xffb547, 0x3ddc84, 0xe8e8f0, 0x9b7bff, 0x3ee6d2, 0x2a2f3a, 0xffffff, 0xf07ab3];
+    const pal = [0xffffff, 0xf3efe2, 0x9cc7ef, 0xf6d36b, 0xf2a7b8, 0xbfe3c8, 0xffffff, 0x2d3a4a, 0xe8e2d0, 0xd9e8f7];
     const skin = [0xf2c9a8, 0xd9a07a, 0xa86f4c, 0x6e4a33, 0xffe0c4];
     const c = new T.Color();
     seats.forEach((s, i) => { body.setColorAt(i, c.setHex(pal[i % pal.length])); head.setColorAt(i, c.setHex(skin[(i * 7) % skin.length])); });
@@ -198,18 +198,19 @@ class Match {
     r.setPixelRatio(Math.min(2, devicePixelRatio)); r.setSize(innerWidth, innerHeight); r.shadowMap.enabled = true; r.shadowMap.type = T.PCFSoftShadowMap;
     r.outputEncoding = T.sRGBEncoding; r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
     document.getElementById('stage').appendChild(r.domElement);
-    const sc = this.scene = new T.Scene(); sc.background = new T.Color(0x0b1220); sc.fog = new T.Fog(0x0b1220, 45, 110);
+    const sc = this.scene = new T.Scene(); sc.background = new T.Color(0xcfe3f2); sc.fog = new T.Fog(0xdbe8f0, 120, 420);
     this.cam = new T.PerspectiveCamera(46, innerWidth / innerHeight, 0.1, 300); this.cam.position.set(0, 6, 20);
-    sc.add(new T.HemisphereLight(0xcfe3ff, 0x1b2230, 0.65));
-    const sun = new T.DirectionalLight(0xfff3e0, 1.35); sun.position.set(-8, 22, 10); sun.castShadow = true;
+    sc.add(new T.HemisphereLight(0xdcecff, 0x4a6b3a, 0.85));
+    const sun = new T.DirectionalLight(0xfff1d6, 1.6); sun.position.set(-10, 24, -14); sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 20, bottom: -20, near: 1, far: 60 }); sun.shadow.bias = -0.0005; sc.add(sun);
-    this.stadium = new Stadium(sc, 'hard');
+    this.stadium = new Stadium(sc, 'grass');
+    this.outdoor = window.RallyOutdoor ? RallyOutdoor.build(sc, sc) : null;
     const bm = new T.MeshStandardMaterial({ color: 0xd8f24a, roughness: 0.6, emissive: 0x2a3300 });
     this.ballMesh = new T.Mesh(new T.SphereGeometry(C.R * 1.6, 20, 14), bm); this.ballMesh.castShadow = true; sc.add(this.ballMesh);
     this.shadowBlob = new T.Mesh(new T.CircleGeometry(0.09, 16), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 })); this.shadowBlob.rotation.x = -Math.PI / 2; sc.add(this.shadowBlob);
     this.trail = []; for (let i = 0; i < 10; i++) { const m = new T.Mesh(new T.SphereGeometry(C.R * 1.3 * (1 - i / 12), 8, 6), new T.MeshBasicMaterial({ color: 0xeaff7a, transparent: true, opacity: 0.25 * (1 - i / 10) })); sc.add(m); this.trail.push(m); }
     this.ball = { p: new T.Vector3(), v: new T.Vector3(), spin: 0, live: false, lastTeam: -1, bounces: 0, bounceSide: 0, serve: false, served: false, fault: 0, netTouch: false, held: true };
-    this.colors = [{ shirt: 0x2f7cf6, shorts: 0xf4f6fb, accent: 0x3ee6d2, racket: 0x4da3ff, skin: 0xf0c3a0 }, { shirt: 0xff8a3d, shorts: 0x23262e, accent: 0xffb547, racket: 0xff5d6c, skin: 0x9a6a4a }];
+    this.colors = [{ shirt: 0xf7f8fa, shorts: 0xf7f8fa, accent: 0x2f7cf6, racket: 0x2f7cf6, skin: 0xf0c3a0 }, { shirt: 0xf7f8fa, shorts: 0xeef0f3, accent: 0xff8a3d, racket: 0xff6a2a, skin: 0x9a6a4a }];
     this.players = []; this.setup(1);
     this.diff = 0.75; this.camMode = 'tv'; this.paused = true; this.pending = null; this.stats = { hits: 0, rallies: 0, points: 0, faults: 0, humanSwings: 0, humanHits: 0, maxRally: 0, rally: 0 };
     addEventListener('resize', () => { r.setSize(innerWidth, innerHeight); this.cam.aspect = innerWidth / innerHeight; this.cam.updateProjectionMatrix(); });
@@ -254,7 +255,7 @@ class Match {
     }
   }
   start(games, surface, diff) {
-    Sfx.init(); this.score = new Score(games); if (surface) this.setSurface(surface); if (diff != null) this.diff = diff;
+    Sfx.init(); window.RallyOutdoor && Sfx.ctx && RallyOutdoor.Ambience.start(Sfx.ctx); this.score = new Score(games); if (surface) this.setSurface(surface); if (diff != null) this.diff = diff;
     this.stats = { hits: 0, rallies: 0, points: 0, faults: 0, humanSwings: 0, humanHits: 0, maxRally: 0, rally: 0 };
     this.paused = false; this.newPoint(true);
   }
@@ -445,7 +446,7 @@ class Match {
     const b = this.ball; this.ballMesh.position.copy(b.p); this.shadowBlob.position.set(b.p.x, 0.012, b.p.z); this.shadowBlob.scale.setScalar(1 + b.p.y * 0.25); this.shadowBlob.material.opacity = 0.35 / (1 + b.p.y * 0.4);
     for (let i = this.trail.length - 1; i > 0; i--) this.trail[i].position.copy(this.trail[i - 1].position); this.trail[0].position.copy(b.p);
     this.trail.forEach((m) => (m.visible = b.live));
-    this.stadium.animateCrowd(this.t, b.p.x); this.camera(dt);
+    this.stadium.animateCrowd(this.t, b.p.x); this.outdoor && this.outdoor.update(this.t); this.camera(dt);
     this.renderer.render(this.scene, this.cam);
     this.frames = (this.frames || 0) + 1;
   }

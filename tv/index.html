@@ -59,7 +59,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;background:#1a2030;border:1px solid v
       <h1>Tenis</h1>
       <p class="sub">Tu móvil es la raqueta. La tele, la pista.</p>
       <div class="lbl">Superficie</div>
-      <div class="row" id="optSurf"><button class="opt on" data-v="hard">Pista rápida</button><button class="opt" data-v="clay">Tierra batida</button><button class="opt" data-v="grass">Hierba</button></div>
+      <div class="row" id="optSurf"><button class="opt on" data-v="grass">Hierba · Jardín</button><button class="opt" data-v="clay">Tierra batida</button><button class="opt" data-v="hard">Pista rápida</button></div>
       <div class="lbl">Partido</div>
       <div class="row" id="optGames"><button class="opt" data-v="2">Exprés · 2 juegos</button><button class="opt on" data-v="4">Rápido · 4 juegos</button><button class="opt" data-v="6">Set completo · 6</button></div>
       <div class="lbl">Rival IA</div>
@@ -84,6 +84,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;background:#1a2030;border:1px solid v
 <script src="../vendor/three.min.js"></script>
 <script src="../vendor/peerjs.min.js"></script>
 <script src="../shared/net.js"></script>
+<script src="outdoor.js"></script>
 <script src="game.js"></script>
 <script>
 (() => {
@@ -109,7 +110,7 @@ const ui = {
 function teamName(t) { const hs = [...humans.entries()].filter(([sl]) => (sl % 2) === t).map(([, n]) => n); return hs.length ? hs.join(' & ') : (t === 0 ? 'Jugador' : 'Unfire IA'); }
 const match = new KinektTennis.Match(ui); window.__kinekt = match;
 // options
-const opt = { surf: 'hard', games: 4, diff: 0.75 };
+const opt = { surf: 'grass', games: 4, diff: 0.75 };
 [['#optSurf', 'surf'], ['#optGames', 'games'], ['#optDiff', 'diff']].forEach(([id, k]) => $(id).addEventListener('click', (e) => { const b = e.target.closest('.opt'); if (!b) return; $(id).querySelectorAll('.opt').forEach((x) => x.classList.toggle('on', x === b)); opt[k] = k === 'surf' ? b.dataset.v : +b.dataset.v; if (k === 'surf') match.setSurface(opt.surf); }));
 function slotsUI() { $('#slots').innerHTML = [0, 1, 2, 3].map((s) => `<div class="slot ${humans.has(s) ? 'on' : ''}"><span class="dot"></span>${humans.has(s) ? humans.get(s) + ' · ' + (s % 2 ? 'equipo naranja' : 'equipo azul') : 'Mando ' + (s + 1) + ' libre'}</div>`).join(''); }
 slotsUI();
